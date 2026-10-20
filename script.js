@@ -201,6 +201,120 @@
         initScrollReveal();
     }
 
+    // ============================================
+    // Skills & Toolkit Filter Tabs Logic
+    // Single shared skills data array with dynamic sequential numbering
+    // ============================================
+    const SKILLS_DATA = [
+        // PROGRAMMING (In ALL: true)
+        { id: 'python', name: 'PYTHON', category: 'programming', categoryLabel: 'Programming', icon: 'devicon-python-plain colored', inAll: true },
+        { id: 'cpp', name: 'C++', category: 'programming', categoryLabel: 'Programming', icon: 'devicon-cplusplus-plain colored', inAll: true },
+        { id: 'java', name: 'JAVA (BASICS)', category: 'programming', categoryLabel: 'Programming', icon: 'devicon-java-plain colored', inAll: true },
+        { id: 'sql', name: 'SQL', category: 'programming', categoryLabel: 'Programming', icon: 'fas fa-database skill-icon-custom', inAll: true },
+
+        // DATA SCIENCE (In ALL: true)
+        { id: 'numpy', name: 'NUMPY', category: 'data-science', categoryLabel: 'Data Science', icon: 'devicon-numpy-original colored', inAll: true },
+        { id: 'pandas', name: 'PANDAS', category: 'data-science', categoryLabel: 'Data Science', icon: 'devicon-pandas-original colored', inAll: true },
+        { id: 'matplotlib', name: 'MATPLOTLIB', category: 'data-science', categoryLabel: 'Data Science', icon: 'devicon-matplotlib-plain colored', inAll: true },
+
+        // AI / ML (In ALL: true)
+        { id: 'scikitlearn', name: 'SCIKIT-LEARN', category: 'ai-ml', categoryLabel: 'AI / ML', icon: 'devicon-scikitlearn-plain colored', inAll: true },
+        { id: 'nlp', name: 'NLP', category: 'ai-ml', categoryLabel: 'AI / ML', icon: 'fas fa-brain skill-icon-custom', inAll: true },
+        { id: 'tfidf', name: 'TF-IDF', category: 'ai-ml', categoryLabel: 'AI / ML', icon: 'fas fa-calculator skill-icon-custom', inAll: true },
+        { id: 'cosine-similarity', name: 'COSINE SIMILARITY', category: 'ai-ml', categoryLabel: 'AI / ML', icon: 'fas fa-vector-square skill-icon-custom', inAll: true },
+        { id: 'rag', name: 'RAG', category: 'ai-ml', categoryLabel: 'AI / ML', icon: 'fas fa-layer-group skill-icon-custom', inAll: true },
+        { id: 'llm-apis', name: 'LLM APIS', category: 'ai-ml', categoryLabel: 'AI / ML', icon: 'fas fa-robot skill-icon-custom', inAll: true },
+
+        // WEB & API (In ALL: true)
+        { id: 'html', name: 'HTML', category: 'web-api', categoryLabel: 'Web & API', icon: 'devicon-html5-plain colored', inAll: true },
+        { id: 'css', name: 'CSS', category: 'web-api', categoryLabel: 'Web & API', icon: 'devicon-css3-plain colored', inAll: true },
+        { id: 'javascript', name: 'JAVASCRIPT', category: 'web-api', categoryLabel: 'Web & API', icon: 'devicon-javascript-plain colored', inAll: true },
+        { id: 'fastapi', name: 'FASTAPI', category: 'web-api', categoryLabel: 'Web & API', icon: 'devicon-fastapi-plain colored', inAll: true },
+        { id: 'rest-apis', name: 'REST APIS', category: 'web-api', categoryLabel: 'Web & API', icon: 'fas fa-network-wired skill-icon-custom', inAll: true },
+
+        // TOOLS (In ALL: false — EXCLUDED from ALL, ONLY in TOOLS)
+        { id: 'git', name: 'GIT', category: 'tools', categoryLabel: 'Tools & Platforms', icon: 'devicon-git-plain colored', inAll: false },
+        { id: 'github', name: 'GITHUB', category: 'tools', categoryLabel: 'Tools & Platforms', icon: 'fab fa-github skill-icon-github', inAll: false },
+        { id: 'jupyter', name: 'JUPYTER', category: 'tools', categoryLabel: 'Tools & Platforms', icon: 'devicon-jupyter-plain colored', inAll: false },
+        { id: 'vscode', name: 'VS CODE', category: 'tools', categoryLabel: 'Tools & Platforms', icon: 'devicon-vscode-plain colored', inAll: false }
+    ];
+
+    function initSkillsFilter() {
+        const skillsGrid = document.getElementById('skills-grid');
+        const filterTabs = document.querySelectorAll('.skills-tab');
+        if (!skillsGrid || filterTabs.length === 0) return;
+
+        function renderSkills(filterKey) {
+            let filtered;
+            if (filterKey === 'all') {
+                filtered = SKILLS_DATA.filter(skill => skill.inAll);
+            } else {
+                filtered = SKILLS_DATA.filter(skill => skill.category === filterKey);
+            }
+
+            const html = filtered.map((skill, index) => {
+                const numStr = String(index + 1).padStart(2, '0');
+                return `
+                <div class="skill-card" data-skill-id="${skill.id}">
+                    <div class="skill-card-top">
+                        <span class="skill-card-num">${numStr}</span>
+                        <div class="skill-card-icon">
+                            <i class="${skill.icon}"></i>
+                        </div>
+                    </div>
+                    <div class="skill-card-content">
+                        <h3 class="skill-card-name">${skill.name}</h3>
+                        <span class="skill-card-category">${skill.categoryLabel}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            skillsGrid.innerHTML = html;
+        }
+
+        filterTabs.forEach((tab, tabIndex) => {
+            tab.addEventListener('click', function () {
+                const filterKey = this.getAttribute('data-filter');
+                if (!filterKey) return;
+
+                filterTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+
+                if (isReducedMotion()) {
+                    renderSkills(filterKey);
+                } else {
+                    skillsGrid.classList.add('is-filtering');
+                    setTimeout(() => {
+                        renderSkills(filterKey);
+                        skillsGrid.classList.remove('is-filtering');
+                    }, 90);
+                }
+            });
+
+            // Accessible Arrow Key Navigation
+            tab.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const direction = e.key === 'ArrowRight' ? 1 : -1;
+                    const nextIndex = (tabIndex + direction + filterTabs.length) % filterTabs.length;
+                    filterTabs[nextIndex].focus();
+                    filterTabs[nextIndex].click();
+                }
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSkillsFilter);
+    } else {
+        initSkillsFilter();
+    }
+
     // Footer dynamic year
     const yearEl = document.getElementById('year');
     if (yearEl) {
